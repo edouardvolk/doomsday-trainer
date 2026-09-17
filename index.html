@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1116">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Doomsday — entraînement au jour de la semaine</title>
+<style>
+:root{
+  --bg:#0e1116; --bg2:#161a22; --bg3:#1e2430; --bg4:#272f3d;
+  --fg:#e9eef7; --muted:#96a1b5; --border:#2b3342;
+  --accent:#5b8cff; --accent-soft:#5b8cff22;
+  --ok:#2fbf71; --ok-soft:#2fbf7122;
+  --ko:#f0525f; --ko-soft:#f0525f22;
+  --radius:12px;
+}
+html[data-theme="light"]{
+  --bg:#f4f6fa; --bg2:#ffffff; --bg3:#eaeef5; --bg4:#dde3ee;
+  --fg:#101521; --muted:#5a6577; --border:#d3dae6;
+  --accent:#2f62e0; --accent-soft:#2f62e01a;
+  --ok:#0f8f4d; --ok-soft:#0f8f4d1a;
+  --ko:#c92a3a; --ko-soft:#c92a3a1a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px; line-height:1.45;
+  -webkit-text-size-adjust:100%;
+  padding:16px; padding-bottom:48px;
+  overscroll-behavior-y:contain;
+}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.app{max-width:1120px;margin:0 auto}
+h1{font-size:1.15rem;margin:0;letter-spacing:.2px}
+h2{font-size:1rem;margin:0 0 12px;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)}
+h3{font-size:.9rem;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.sub{color:var(--muted);font-size:.8rem;margin:2px 0 0}
+
+header.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.panel + .panel{margin-top:14px}
+
+.ctrls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center}
+.ctrl{display:flex;flex-direction:column;gap:6px}
+.ctrl > .lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.seg{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{
+  background:transparent;border:0;color:var(--muted);font:inherit;font-size:.85rem;
+  padding:7px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;
+}
+.seg button:hover{color:var(--fg)}
+.seg button.active{background:var(--accent);color:#fff}
+html[data-theme="light"] .seg button.active{color:#fff}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+button.btn{
+  background:var(--bg3);border:1px solid var(--border);color:var(--fg);font:inherit;font-size:.85rem;
+  padding:8px 14px;border-radius:9px;cursor:pointer;
+}
+button.btn:hover:not(:disabled){background:var(--bg4)}
+button.btn:disabled{opacity:.45;cursor:default}
+button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.btn.danger{color:var(--ko);border-color:var(--ko)}
+button.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.layout{display:grid;grid-template-columns:1fr;gap:14px}
+.layout.with-aside{grid-template-columns:minmax(0,1fr) 300px}
+@media (max-width:860px){ .layout.with-aside{grid-template-columns:1fr} }
+
+/* ---- quiz ---- */
+.quizhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:.85rem}
+.progressbar{height:4px;background:var(--bg3);border-radius:4px;overflow:hidden;margin:10px 0 0}
+.progressbar > i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s ease}
+.chrono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";letter-spacing:.3px}
+.chrono b{color:var(--fg);font-weight:600}
+
+.qbox{text-align:center;padding:26px 10px 22px}
+.qkicker{font-size:.75rem;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.qtext{font-size:clamp(1.7rem,6vw,3rem);font-weight:700;line-height:1.15;letter-spacing:-.5px}
+.qhint{color:var(--muted);font-size:.9rem;margin-top:10px;min-height:1.2em}
+
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.days button{
+  position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:11px;
+  color:var(--fg);font:inherit;padding:16px 6px 14px;cursor:pointer;text-align:center;
+  user-select:none;-webkit-user-select:none;
+  transition:background .12s,border-color .12s,transform .06s;
+}
+.days button:hover:not(:disabled){background:var(--bg4)}
+.days button:active:not(:disabled){transform:translateY(1px)}
+.days button:disabled{cursor:default;opacity:.85}
+.days button .k{display:block;font-size:.68rem;color:var(--muted);margin-bottom:4px}
+.days button .n{display:block;font-size:1rem;font-weight:600}
+.days button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.days button.pick-ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.days button.pick-ok .k{color:var(--ok)}
+.days button.pick-ko{background:var(--ko-soft);border-color:var(--ko);color:var(--ko)}
+.days button.pick-ko .k{color:var(--ko)}
+
+.numarea{display:flex;flex-direction:column;gap:12px;align-items:center}
+.numdisp{
+  min-width:150px;text-align:center;font-size:2.4rem;font-weight:700;font-variant-numeric:tabular-nums;
+  background:var(--bg3);border:2px dashed var(--border);border-radius:12px;padding:6px 22px;letter-spacing:2px;
+}
+.numdisp.empty{color:var(--muted)}
+.numdisp.pick-ok{background:var(--ok-soft);border-color:var(--ok);border-style:solid;color:var(--ok)}
+.numdisp.pick-ko{background:var(--ko-soft);border-color:var(--ko);border-style:solid;color:var(--ko)}
+.nums{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.nums button{
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--fg);font:inherit;
+  font-size:1rem;font-weight:600;min-width:52px;padding:11px 8px;cursor:pointer;font-variant-numeric:tabular-nums;
+  user-select:none;-webkit-user-select:none;
+}
+.nums button:hover:not(:disabled){background:var(--bg4)}
+.nums button:disabled{opacity:.5;cursor:default}
+.nums button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.feedback{margin-top:16px;border-radius:12px;padding:0;overflow:hidden;max-height:0;transition:max-height .18s ease}
+.feedback.show{max-height:620px;padding:14px 16px;border:1px solid var(--border)}
+.feedback.ok{background:var(--ok-soft);border-color:var(--ok)}
+.feedback.ko{background:var(--ko-soft);border-color:var(--ko)}
+.feedback .verdict{font-weight:700;font-size:1.05rem;margin-bottom:8px}
+.feedback.ok .verdict{color:var(--ok)}
+.feedback.ko .verdict{color:var(--ko)}
+.calc{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.84rem;line-height:1.75;white-space:pre-wrap;color:var(--fg)}
+.calc .hi{color:var(--accent);font-weight:700}
+.calc .res{color:var(--ok);font-weight:700}
+.feedback .tip{color:var(--muted);font-size:.75rem;margin-top:10px}
+
+/* ---- aside reference ---- */
+aside .reftable{width:100%;border-collapse:collapse;font-size:.85rem}
+aside .reftable th,aside .reftable td{padding:5px 6px;text-align:left;border-bottom:1px solid var(--border)}
+aside .reftable th{color:var(--muted);font-weight:500;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px}
+aside .reftable td.d{font-weight:700;font-variant-numeric:tabular-nums;text-align:right;width:64px}
+aside .reftable td.m{color:var(--muted);font-size:.75rem}
+aside .reftable tr.hl td{background:var(--accent-soft)}
+
+/* ---- settings ---- */
+details.settings summary{cursor:pointer;list-style:none;font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:8px}
+details.settings summary::-webkit-details-marker{display:none}
+details.settings summary::before{content:"▸";color:var(--accent);transition:transform .15s}
+details.settings[open] summary::before{transform:rotate(90deg)}
+.setgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:16px}
+.rangewrap{display:flex;flex-direction:column;gap:10px}
+.rangerow{display:flex;align-items:center;gap:10px}
+.rangerow span{width:34px;font-size:.75rem;color:var(--muted)}
+.ynum{
+  width:72px;flex:none;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--fg);
+  font:inherit;font-weight:600;font-variant-numeric:tabular-nums;text-align:center;padding:6px 4px;
+}
+.ynum:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.presets button{background:var(--bg3);border:1px solid var(--border);border-radius:20px;color:var(--muted);font:inherit;font-size:.75rem;padding:5px 11px;cursor:pointer}
+.presets button:hover{color:var(--fg);border-color:var(--accent)}
+label.check{display:flex;gap:9px;align-items:flex-start;cursor:pointer;font-size:.88rem;margin-bottom:12px}
+label.check input{accent-color:var(--accent);margin-top:3px;flex:none}
+label.check em{display:block;font-style:normal;color:var(--muted);font-size:.75rem}
+
+/* ---- table des réponses ---- */
+ol.method{margin:0;padding-left:20px;font-size:.86rem;color:var(--fg)}
+ol.method li{margin-bottom:7px}
+ol.method b{color:var(--accent)}
+ol.method i{font-style:italic;color:var(--muted)}
+#answersPanel .reftable{width:100%;border-collapse:collapse;font-size:.85rem}
+#answersPanel .reftable th,#answersPanel .reftable td{padding:5px 6px;text-align:left;border-bottom:1px solid var(--border)}
+#answersPanel .reftable th{color:var(--muted);font-weight:500;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px}
+#answersPanel .reftable td.d{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+#answersPanel .reftable td .m{color:var(--muted);font-size:.75rem}
+.ddgrid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:5px;
+  max-height:300px;overflow:auto;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+}
+.ddgrid .dd{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:5px 7px;font-size:.78rem;display:flex;justify-content:space-between;gap:6px}
+.ddgrid .dd .y{font-variant-numeric:tabular-nums;color:var(--muted)}
+.ddgrid .dd .w{font-weight:700}
+.ddgrid .dd.leap{border-color:var(--accent)}
+.ddgrid .dd.leap .y::after{content:" •";color:var(--accent)}
+
+/* ---- end screen ---- */
+.scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:4px 0 18px}
+.score{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+.score .v{font-size:1.7rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.score .l{font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:3px}
+.score.big .v{color:var(--accent)}
+.recap{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.recap li{border-radius:10px;padding:9px 12px;font-size:.88rem;border:1px solid var(--border);border-left-width:4px}
+.recap li.ok{background:var(--bg3);border-left-color:var(--ok)}
+.recap li.ko{background:var(--ko-soft);border-color:var(--ko);border-left-color:var(--ko)}
+.recap summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.recap summary::-webkit-details-marker{display:none}
+.recap .q{font-weight:600}
+.recap .q::before{content:"▸ ";color:var(--muted)}
+.recap details[open] .q::before{content:"▾ "}
+.recap li.ok .q::before{color:var(--ok)}
+.recap li.ko .q::before{color:var(--ko)}
+.recap .num{color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums}
+.recap .a{color:var(--muted);font-size:.82rem;margin-left:auto;white-space:nowrap}
+.recap .a b{color:var(--ok);font-weight:600}
+.recap .a s{color:var(--ko);text-decoration-color:var(--ko)}
+.recap .t{font-variant-numeric:tabular-nums;color:var(--fg);font-weight:600}
+.recap .t.fast{color:var(--ok)}
+.recap .t.slow{color:var(--ko)}
+.recap pre.calc{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--border)}
+.allgood{background:var(--ok-soft);border:1px solid var(--ok);color:var(--ok);border-radius:10px;padding:12px 14px;font-weight:600}
+.endactions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+
+/* ---- stats ---- */
+.statgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px}
+@media (max-width:860px){ .statgrid{grid-template-columns:1fr} }
+canvas{width:100%;height:190px;display:block}
+.monthbars{display:flex;flex-direction:column;gap:5px}
+.mb{display:grid;grid-template-columns:74px 1fr 74px;align-items:center;gap:8px;font-size:.8rem}
+.mb .name{color:var(--muted)}
+.mb .track{background:var(--bg3);border-radius:5px;height:12px;overflow:hidden}
+.mb .track i{display:block;height:100%;background:var(--ko);border-radius:5px}
+.mb .track i.zero{background:var(--ok)}
+.mb .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.mb.worst .name{color:var(--ko);font-weight:600}
+.empty{color:var(--muted);font-size:.85rem;font-style:italic}
+.histlist{list-style:none;margin:10px 0 0;padding:0;max-height:170px;overflow:auto;font-size:.8rem}
+.histlist li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--border);color:var(--muted)}
+.histlist li b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font-size:.72rem;font-family:ui-monospace,Menlo,monospace}
+.hidden{display:none !important}
+
+/* ================= mobile ================= */
+@media (max-width:760px){
+  body{
+    padding:10px calc(10px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+  }
+  /* le quiz d'abord : réglages, antisèche et stats passent dessous */
+  .app{display:flex;flex-direction:column}
+  header.top{order:0;margin-bottom:8px}
+  #layout{order:1}
+  #ctrlPanel{order:2}
+  #settingsWrap{order:3}
+  #answersWrap{order:4}
+  #statsPanel{order:5}
+  footer{order:6}
+  .panel + .panel{margin-top:10px}
+  .layout{gap:10px}
+
+  h1{font-size:1rem}
+  #kbdHelp,#numHelp{display:none}
+  .kbd{display:none}
+  .panel{padding:12px 12px 14px}
+
+  /* dans le quiz : le retour d'info se glisse au-dessus des jours
+     pour que les 7 boutons restent atteignables */
+  #quiz{display:flex;flex-direction:column}
+  #quiz .quizhead{order:1}
+  #quiz .progressbar{order:2}
+  #quiz .qbox{order:3}
+  #quiz #feedback{order:4}
+  #quiz #daysArea{order:5}
+  #quiz #numArea{order:6}
+  #quiz .quizactions{order:7}
+  .feedback{margin:0 0 12px}
+  .feedback.show{max-height:40vh;overflow:auto;-webkit-overflow-scrolling:touch}
+  .feedback.show{cursor:pointer}
+  .calc{font-size:.75rem;line-height:1.65}
+
+  .qbox{padding:12px 2px 12px}
+  .qkicker{margin-bottom:6px}
+  .qtext{font-size:clamp(1.5rem,7.5vw,2.2rem)}
+  .qhint{font-size:.82rem;margin-top:6px}
+
+  /* 7 jours visibles d'un coup : 2 colonnes, dimanche sur toute la largeur */
+  .days{grid-template-columns:repeat(2,1fr);gap:7px}
+  .days button{padding:13px 6px;border-radius:12px}
+  .days button:nth-child(7){grid-column:1 / -1}
+  .days button .k{display:none}
+  .days button .n{font-size:1.05rem}
+
+  .numarea{gap:10px}
+  .numdisp{font-size:1.9rem;min-width:130px;padding:4px 18px}
+  .nums{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%}
+  .nums button{min-width:0;padding:13px 2px}
+
+  .quizactions{margin-top:12px}
+  .quizactions button{flex:1}
+  .ctrls{gap:10px 14px}
+  .seg button{padding:9px 12px}
+  .scores{grid-template-columns:repeat(2,1fr)}
+  .score .v{font-size:1.4rem}
+  .recap .a{margin-left:0;white-space:normal}
+  .mb{grid-template-columns:62px 1fr 66px;font-size:.75rem}
+  .ddgrid{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));max-height:220px}
+  .endactions button{flex:1}
+}
+footer{color:var(--muted);font-size:.75rem;text-align:center;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div>
+      <h1>Doomsday — jour de la semaine</h1>
+      <p class="sub" id="kbdHelp">Algorithme de Conway · réponds au clavier <span class="kbd">1</span>–<span class="kbd">7</span> · <span class="kbd">Espace</span> montre la réponse · <span class="kbd">Entrée</span> enchaîne</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="themeBtn" title="Basculer clair / sombre">Thème</button>
+    </div>
+  </header>
+
+  <div class="panel" id="ctrlPanel">
+    <div class="ctrls">
+      <div class="ctrl">
+        <span class="lbl">Mode</span>
+        <div class="seg" id="modeSeg">
+          <button data-v="anchor">Dates repères</button>
+          <button data-v="year">Doomsday de l'année</button>
+          <button data-v="date">Date complète</button>
+          <button data-v="mixed">Mixte</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <span class="lbl">Série</span>
+        <div class="seg" id="lenSeg">
+          <button data-v="5">5</button>
+          <button data-v="10">10</button>
+          <button data-v="20">20</button>
+          <button data-v="0">∞</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <span class="lbl">Chrono</span>
+        <div class="seg" id="chronoSeg">
+          <button data-v="1">Visible</button>
+          <button data-v="0">Masqué</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="settingsWrap">
+    <details class="settings" id="settings">
+      <summary>Réglages</summary>
+      <div class="setgrid">
+        <div>
+          <h3>Plage d'années</h3>
+          <div class="rangewrap">
+            <div class="rangerow"><span>Min</span><input type="range" id="yMin" min="1600" max="2400" step="1"><input type="number" class="ynum" id="yMinNum" min="1600" max="2400" step="1" inputmode="numeric" aria-label="Année minimum"></div>
+            <div class="rangerow"><span>Max</span><input type="range" id="yMax" min="1600" max="2400" step="1"><input type="number" class="ynum" id="yMaxNum" min="1600" max="2400" step="1" inputmode="numeric" aria-label="Année maximum"></div>
+            <div class="presets" id="presets">
+              <button data-a="1900" data-b="1999">1900-1999</button>
+              <button data-a="2000" data-b="2099">2000-2099</button>
+              <button data-a="1990" data-b="now">Ma vie (1990-aujourd'hui)</button>
+              <button data-a="1600" data-b="2400">Large (1600-2400)</button>
+              <button data-a="1900" data-b="2100">Défaut (1900-2100)</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3>Options</h3>
+          <label class="check"><input type="checkbox" id="optLeap"><span>Uniquement des années bissextiles
+            <em>Pour travailler le piège janvier / février.</em></span></label>
+          <label class="check"><input type="checkbox" id="optRevision"><span>Mode révision
+            <em>Affiche en permanence le tableau des dates repères sur le côté.</em></span></label>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <div class="panel" id="answersWrap">
+    <details class="settings" id="answersPanel">
+      <summary>Table des réponses — antisèche</summary>
+      <div class="setgrid">
+        <div>
+          <h3>La méthode en 3 temps</h3>
+          <ol class="method">
+            <li><b>Doomsday de l'année.</b> Ancre du siècle, puis sur les 2 derniers chiffres <i>aa</i> :
+              ⌊<i>aa</i>/12⌋ + (<i>aa</i> mod 12) + ⌊(<i>aa</i> mod 12)/4⌋, le tout mod 7, ajouté à l'ancre.</li>
+            <li><b>Date repère du mois.</b> Ce jour-là tombe sur le doomsday de l'année.</li>
+            <li><b>Écart.</b> (jour − repère) mod 7, à ajouter au doomsday.</li>
+          </ol>
+          <h3 style="margin-top:16px">Ancres de siècle</h3>
+          <table class="reftable" id="ansCent"></table>
+        </div>
+        <div>
+          <h3>Dates repères</h3>
+          <table class="reftable" id="ansRef"></table>
+        </div>
+      </div>
+      <h3 style="margin-top:20px">Doomsday année par année <span id="ansRangeLbl" style="text-transform:none;letter-spacing:0"></span></h3>
+      <div class="ddgrid" id="ansYears"></div>
+    </details>
+  </div>
+
+  <div class="layout" id="layout">
+    <main>
+      <!-- QUIZ -->
+      <section class="panel" id="quiz">
+        <div class="quizhead">
+          <div id="counter">Question 1 / 10</div>
+          <div class="chrono" id="chrono"></div>
+        </div>
+        <div class="progressbar"><i id="progress"></i></div>
+
+        <div class="qbox">
+          <div class="qkicker" id="qkicker"></div>
+          <div class="qtext" id="qtext"></div>
+          <div class="qhint" id="qhint"></div>
+        </div>
+
+        <div id="daysArea" class="days"></div>
+
+        <div id="numArea" class="numarea hidden">
+          <div class="numdisp empty" id="numDisp">–</div>
+          <div class="nums" id="numBtns"></div>
+          <div class="sub" id="numHelp">Tape le numéro au clavier · <span class="kbd">Entrée</span> valide · <span class="kbd">⌫</span> corrige</div>
+        </div>
+
+        <div class="feedback" id="feedback" aria-live="polite"></div>
+
+        <div class="quizactions" style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" id="revealBtn" title="Affiche la réponse et le calcul complet. La question est comptée comme non réussie.">Voir la réponse <span class="kbd">Espace</span></button>
+          <button class="btn" id="endNowBtn">Terminer la série</button>
+        </div>
+      </section>
+
+      <!-- FIN DE SÉRIE -->
+      <section class="panel hidden" id="endScreen">
+        <h2>Fin de série</h2>
+        <div class="scores" id="endScores"></div>
+        <h3>Récapitulatif <span id="recapHint" style="text-transform:none;letter-spacing:0;font-weight:400"></span></h3>
+        <div id="endRecap"></div>
+        <div class="endactions">
+          <button class="btn primary" id="replayBtn">Rejouer <span class="kbd">Entrée</span></button>
+          <button class="btn" id="replayErrBtn">Rejouer uniquement mes erreurs <span class="kbd">E</span></button>
+        </div>
+      </section>
+    </main>
+
+    <aside id="aside" class="hidden">
+      <div class="panel">
+        <h2>Dates repères</h2>
+        <table class="reftable" id="refTable"></table>
+        <h3 style="margin-top:16px">Ancres de siècle</h3>
+        <table class="reftable" id="centTable"></table>
+      </div>
+    </aside>
+  </div>
+
+  <section class="panel" id="statsPanel">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <h2 style="margin:0">Progression</h2>
+      <button class="btn danger" id="resetBtn">Réinitialiser les statistiques</button>
+    </div>
+    <div class="statgrid">
+      <div>
+        <h3>Temps moyen par question (s)</h3>
+        <canvas id="chart"></canvas>
+        <ul class="histlist" id="histList"></ul>
+      </div>
+      <div>
+        <h3>Taux d'erreur par mois</h3>
+        <div class="monthbars" id="monthBars"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Fonctionne hors ligne · toutes les réponses sont vérifiées avec l'objet <code>Date</code> de JavaScript.</footer>
+</div>
+
+<script>
+"use strict";
+
+/* ============================ LOGIC START ============================ */
+/* Bloc de logique pure — sans DOM. Testable isolément. */
+
+var DAYS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+var MONTHS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+var MONTHS_CAP = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+var MNEMO = ["3/1 (4 si bissextile)","dernier jour du mois","3/14 — jour de π","4/4","9/5 — « 9 à 5 »","6/6","11/7 — « 7-Eleven »","8/8","5/9 — « 9 à 5 »","10/10","7/11 — « 7-Eleven »","12/12"];
+
+/* « de mars » mais « d'avril » : élision devant avril, août, octobre. */
+function deMonth(m){
+  var n = MONTHS[m-1];
+  return ("aeiouàâéèêîôû".indexOf(n.charAt(0)) >= 0 ? "d'" : "de ") + n;
+}
+
+function isLeap(y){ return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+
+/* Date repère (« doomsday ») du mois m (1-12) pour une année bissextile ou non. */
+function anchorDay(m, leap){
+  switch(m){
+    case 1:  return leap ? 4 : 3;
+    case 2:  return leap ? 29 : 28;
+    case 3:  return 14;
+    case 4:  return 4;
+    case 5:  return 9;
+    case 6:  return 6;
+    case 7:  return 11;
+    case 8:  return 8;
+    case 9:  return 5;
+    case 10: return 10;
+    case 11: return 7;
+    case 12: return 12;
+  }
+}
+
+function daysInMonth(y, m){
+  if(m === 2) return isLeap(y) ? 29 : 28;
+  return [31,28,31,30,31,30,31,31,30,31,30,31][m-1];
+}
+
+/* Jour de la semaine calculé par l'objet Date (référence de vérité). 0 = Lundi … 6 = Dimanche. */
+function weekdayIndex(y, m, d){
+  var dt = new Date(Date.UTC(2000, 0, 1));
+  dt.setUTCFullYear(y, m - 1, d);
+  return (dt.getUTCDay() + 6) % 7;
+}
+
+/* Doomsday de l'année (jour de la semaine des dates repères). */
+function doomsdayOfYear(y){ return weekdayIndex(y, 4, 4); }
+
+/* Ancre du siècle, en index 0 = Lundi. Cycle 400 ans : 1600→mardi, 1700→dimanche, 1800→vendredi, 1900→mercredi. */
+function centuryAnchor(y){
+  var c = ((Math.floor(y / 100) % 4) + 4) % 4;
+  var sundayBased = [2, 0, 5, 3][c]; // mardi, dimanche, vendredi, mercredi
+  return (sundayBased + 6) % 7;
+}
+
+/* Décomposition de la règle « ⌊a/12⌋ + a mod 12 + ⌊(a mod 12)/4⌋ ». */
+function doomsdaySteps(y){
+  var yy = ((y % 100) + 100) % 100;
+  var a = Math.floor(yy / 12);
+  var b = yy % 12;
+  var c = Math.floor(b / 4);
+  var sum = a + b + c;
+  var anchor = centuryAnchor(y);
+  return {
+    century: Math.floor(y / 100) * 100,
+    centuryAnchor: anchor,
+    yy: yy, a: a, b: b, c: c, sum: sum, shift: sum % 7,
+    doomsday: (anchor + (sum % 7)) % 7
+  };
+}
+
+function mod7(n){ return ((n % 7) + 7) % 7; }
+
+/* Numérotation usuelle du doomsday : dimanche = 0, lundi = 1 … samedi = 6. */
+function dayNumber(i){ return (i + 1) % 7; }
+
+/* ---- Génération de questions ---- */
+
+function yearPool(min, max, leapOnly){
+  var pool = [], y;
+  for(y = min; y <= max; y++){ if(!leapOnly || isLeap(y)) pool.push(y); }
+  if(pool.length === 0){ for(y = min; y <= max; y++) pool.push(y); }
+  return pool;
+}
+
+function pick(rnd, arr){ return arr[Math.floor(rnd() * arr.length)]; }
+function randInt(rnd, a, b){ return a + Math.floor(rnd() * (b - a + 1)); }
+
+function makeQuestion(type, opts, rnd){
+  var pool = opts.pool;
+  var q;
+  if(type === "anchor"){
+    var m = randInt(rnd, 1, 12);
+    var leap = opts.leapOnly ? true : (rnd() < 0.5);
+    q = { type:"anchor", month:m, leap:leap, kind:"daynum", answer:anchorDay(m, leap) };
+    q.label = MONTHS_CAP[m-1] + ((m <= 2) ? (leap ? " (année bissextile)" : " (année non bissextile)") : "");
+    q.short = "Repère " + deMonth(m) + ((m <= 2) ? (leap ? " — bissextile" : " — non bissextile") : "");
+  } else if(type === "year"){
+    var y = pick(rnd, pool);
+    q = { type:"year", year:y, kind:"weekday", answer:doomsdayOfYear(y) };
+    q.label = String(y);
+    q.short = "Doomsday " + y;
+  } else {
+    var y2 = pick(rnd, pool);
+    var m2 = randInt(rnd, 1, 12);
+    var d2 = randInt(rnd, 1, daysInMonth(y2, m2));
+    q = { type:"date", year:y2, month:m2, day:d2, kind:"weekday", answer:weekdayIndex(y2, m2, d2) };
+    q.label = d2 + " " + MONTHS[m2-1] + " " + y2;
+    q.short = q.label;
+  }
+  return q;
+}
+
+function nextQuestion(mode, opts, rnd){
+  var type = mode === "mixed" ? pick(rnd, ["anchor","year","date"]) : mode;
+  return makeQuestion(type, opts, rnd);
+}
+
+/* ---- Explications ---- */
+
+function explainYear(y){
+  var s = doomsdaySteps(y);
+  var lines = [];
+  lines.push("Ancre du siècle " + s.century + " = " + DAYS[s.centuryAnchor].toLowerCase());
+  lines.push("Deux derniers chiffres : " + (s.yy < 10 ? "0" + s.yy : s.yy)
+    + "  →  ⌊" + s.yy + "/12⌋ = " + s.a
+    + " ; reste = " + s.b
+    + " ; ⌊" + s.b + "/4⌋ = " + s.c);
+  lines.push(s.a + " + " + s.b + " + " + s.c + " = " + s.sum + "  →  " + s.sum + " mod 7 = " + s.shift);
+  lines.push(DAYS[s.centuryAnchor].toLowerCase() + " + " + s.shift + " = @" + DAYS[s.doomsday].toLowerCase()
+    + " (" + dayNumber(s.doomsday) + ")@   ← doomsday de " + y);
+  return { lines: lines, doomsday: s.doomsday };
+}
+
+function explainDate(y, m, d){
+  var e = explainYear(y);
+  var leap = isLeap(y);
+  var a = anchorDay(m, leap);
+  var diff = d - a;
+  var shift = mod7(diff);
+  var res = mod7(e.doomsday + shift);
+  var lines = e.lines.slice();
+  lines.push("");
+  lines.push("Repère " + deMonth(m) + " = " + a + "/" + m
+    + (m <= 2 ? (leap ? "  (bissextile)" : "  (non bissextile)") : "")
+    + "  →  " + DAYS[e.doomsday].toLowerCase());
+  lines.push("Écart : " + d + " − " + a + " = " + diff + "  →  " + diff + " mod 7 = " + shift);
+  lines.push(DAYS[e.doomsday].toLowerCase() + " + " + shift + " = @" + DAYS[res].toLowerCase()
+    + " (" + dayNumber(res) + ")@");
+  lines.push("→ " + DAYS[res] + " " + d + " " + MONTHS[m-1] + " " + y);
+  return { lines: lines, answer: res };
+}
+
+function explainAnchor(m, leap){
+  var a = anchorDay(m, leap);
+  var lines = [];
+  lines.push("Repère " + deMonth(m)
+    + (m <= 2 ? (leap ? " (année bissextile)" : " (année non bissextile)") : "")
+    + " = @" + a + "@");
+  lines.push("Mémo : " + MNEMO[m-1]);
+  lines.push("Rappel : 3 (4) · 28 (29) · 14 · 4 · 9 · 6 · 11 · 8 · 5 · 10 · 7 · 12");
+  return { lines: lines, answer: a };
+}
+
+function explainQuestion(q){
+  if(q.type === "anchor") return explainAnchor(q.month, q.leap);
+  if(q.type === "year"){
+    var e = explainYear(q.year);
+    return { lines: e.lines, answer: e.doomsday };
+  }
+  return explainDate(q.year, q.month, q.day);
+}
+
+/* ---- Auto-vérification : l'algorithme doit coïncider avec l'objet Date ---- */
+function selfTest(yFrom, yTo){
+  var errors = [];
+  for(var y = yFrom; y <= yTo; y++){
+    var dd = doomsdayOfYear(y);
+    if(doomsdaySteps(y).doomsday !== dd) errors.push("doomsdaySteps " + y);
+    var leap = isLeap(y);
+    var probe = new Date(Date.UTC(2000,0,1)); probe.setUTCFullYear(y, 1, 29);
+    if(leap !== (probe.getUTCMonth() === 1)) errors.push("isLeap " + y);
+    for(var m = 1; m <= 12; m++){
+      if(weekdayIndex(y, m, anchorDay(m, leap)) !== dd) errors.push("anchor " + y + "/" + m);
+      var dim = daysInMonth(y, m);
+      for(var d = 1; d <= dim; d++){
+        if(explainDate(y, m, d).answer !== weekdayIndex(y, m, d)) errors.push("date " + y + "-" + m + "-" + d);
+      }
+    }
+    if(errors.length > 20) break;
+  }
+  return errors;
+}
+
+if(typeof module !== "undefined" && module.exports){
+  module.exports = { isLeap:isLeap, anchorDay:anchorDay, daysInMonth:daysInMonth, weekdayIndex:weekdayIndex,
+    doomsdayOfYear:doomsdayOfYear, doomsdaySteps:doomsdaySteps, explainDate:explainDate, explainYear:explainYear,
+    nextQuestion:nextQuestion, yearPool:yearPool, selfTest:selfTest };
+}
+/* ============================= LOGIC END ============================= */
+
+
+/* ============================== UI =================================== */
+var $ = function(id){ return document.getElementById(id); };
+var LS_SET = "doomsday.settings.v1";
+var LS_HIST = "doomsday.history.v1";
+var LS_MSTAT = "doomsday.monthstats.v1";
+var NUM_CHOICES = [3,4,5,6,7,8,9,10,11,12,14,28,29];
+var DELAY_OK = 1200;
+
+var cfg = {
+  mode: "mixed", len: 10, chrono: true, theme: "dark",
+  yMin: 1900, yMax: 2100, leapOnly: false, revision: false
+};
+
+var S = {
+  queue: null, index: 0, total: 10, current: null,
+  answers: [], seriesStart: 0, qStart: 0, qElapsed: 0,
+  locked: false, finished: false, timerId: null, nextId: null,
+  buffer: "", pool: []
+};
+
+/* ---------- persistance ---------- */
+function loadJSON(k, fb){
+  try{ var v = JSON.parse(localStorage.getItem(k)); return (v === null || v === undefined) ? fb : v; }
+  catch(e){ return fb; }
+}
+function saveJSON(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+function loadCfg(){
+  var saved = loadJSON(LS_SET, {});
+  for(var k in cfg){ if(Object.prototype.hasOwnProperty.call(saved, k)) cfg[k] = saved[k]; }
+  if(cfg.yMin > cfg.yMax){ var t = cfg.yMin; cfg.yMin = cfg.yMax; cfg.yMax = t; }
+}
+function saveCfg(){ saveJSON(LS_SET, cfg); }
+
+/* ---------- formatage ---------- */
+function fmtMs(ms){
+  if(!isFinite(ms)) return "–";
+  var s = ms / 1000;
+  if(s < 60) return s.toFixed(1) + " s";
+  var m = Math.floor(s / 60);
+  return m + " min " + (s - m * 60).toFixed(0).padStart(2, "0") + " s";
+}
+function isTouchUI(){ return !!(window.matchMedia && matchMedia("(hover:none)").matches); }
+function modeLabel(m){
+  return { anchor:"Dates repères", year:"Doomsday de l'année", date:"Date complète", mixed:"Mixte" }[m] || m;
+}
+function calcHTML(lines){
+  return lines.map(function(l){
+    var safe = l.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    return safe.replace(/@([^@]+)@/g, '<span class="res">$1</span>');
+  }).join("\n");
+}
+
+/* ---------- rendu des contrôles ---------- */
+function paintSeg(el, value){
+  Array.prototype.forEach.call(el.querySelectorAll("button"), function(b){
+    b.classList.toggle("active", b.dataset.v === String(value));
+  });
+}
+function syncControls(){
+  document.documentElement.dataset.theme = cfg.theme;
+  var tc = document.querySelector('meta[name="theme-color"]');
+  if(tc) tc.content = cfg.theme === "dark" ? "#0e1116" : "#f4f6fa";
+  paintSeg($("modeSeg"), cfg.mode);
+  paintSeg($("lenSeg"), cfg.len);
+  paintSeg($("chronoSeg"), cfg.chrono ? "1" : "0");
+  $("yMin").value = cfg.yMin; $("yMax").value = cfg.yMax;
+  $("yMinNum").value = cfg.yMin; $("yMaxNum").value = cfg.yMax;
+  $("optLeap").checked = cfg.leapOnly;
+  $("optRevision").checked = cfg.revision;
+  $("aside").classList.toggle("hidden", !cfg.revision);
+  $("layout").classList.toggle("with-aside", cfg.revision);
+  $("endNowBtn").classList.toggle("hidden", cfg.len !== 0);
+  if($("answersPanel").open) renderAnswersPanel();
+}
+
+/* ---------- antisèche ---------- */
+function renderAnswersPanel(){
+  var rows = ['<tr><th>Mois</th><th style="text-align:right">Repère</th></tr>'];
+  for(var m = 1; m <= 12; m++){
+    var d = anchorDay(m, false), dl = anchorDay(m, true);
+    rows.push("<tr><td>" + MONTHS_CAP[m-1] + '<div class="m">' + MNEMO[m-1] + "</div></td>" +
+      '<td class="d">' + (d === dl ? d : d + " / " + dl + '<div class="m">normale / bissextile</div>') + "</td></tr>");
+  }
+  $("ansRef").innerHTML = rows.join("");
+
+  var cents = [[1600,"1600 / 2000"],[1700,"1700 / 2100"],[1800,"1800 / 2200"],[1900,"1900 / 2300"]];
+  $("ansCent").innerHTML = '<tr><th>Siècle</th><th style="text-align:right">Ancre</th></tr>' +
+    cents.map(function(c){ return "<tr><td>" + c[1] + '</td><td class="d">' + DAYS[centuryAnchor(c[0])] + "</td></tr>"; }).join("");
+
+  $("ansRangeLbl").textContent = "(" + cfg.yMin + " → " + cfg.yMax + (cfg.leapOnly ? ", bissextiles seulement" : "") + ")";
+  var cells = [], pool = yearPool(cfg.yMin, cfg.yMax, cfg.leapOnly);
+  for(var i = 0; i < pool.length; i++){
+    var y = pool[i];
+    cells.push('<div class="dd' + (isLeap(y) ? " leap" : "") + '"><span class="y">' + y +
+      '</span><span class="w">' + DAYS[doomsdayOfYear(y)].slice(0, 3) + "</span></div>");
+  }
+  $("ansYears").innerHTML = cells.join("");
+}
+
+/* ---------- tableau de référence ---------- */
+function renderRefTable(){
+  var leap = false, y = S.current && S.current.year;
+  if(y) leap = isLeap(y);
+  else if(cfg.leapOnly) leap = true;
+  var hlMonth = S.current ? S.current.month : 0;
+  var rows = ['<tr><th>Mois</th><th style="text-align:right">Repère</th></tr>'];
+  for(var m = 1; m <= 12; m++){
+    var d = anchorDay(m, leap);
+    var alt = (m <= 2) ? (" / " + anchorDay(m, !leap) + (leap ? " (non bis.)" : " (bis.)")) : "";
+    rows.push('<tr class="' + (m === hlMonth ? "hl" : "") + '"><td>' + MONTHS_CAP[m-1] +
+      '<div class="m">' + MNEMO[m-1] + '</div></td><td class="d">' + d + alt + '</td></tr>');
+  }
+  $("refTable").innerHTML = rows.join("");
+
+  var cents = [[1600,"1600 / 2000"],[1700,"1700 / 2100"],[1800,"1800 / 2200"],[1900,"1900 / 2300"]];
+  $("centTable").innerHTML = '<tr><th>Siècle</th><th style="text-align:right">Ancre</th></tr>' +
+    cents.map(function(c){
+      return "<tr><td>" + c[1] + '</td><td class="d" style="width:auto">' + DAYS[centuryAnchor(c[0])] + "</td></tr>";
+    }).join("");
+}
+
+/* ---------- boutons de réponse ---------- */
+function buildDayButtons(){
+  var html = "";
+  for(var i = 0; i < 7; i++){
+    html += '<button type="button" data-i="' + i + '"><span class="k">' + (i+1) + '</span><span class="n">' + DAYS[i] + "</span></button>";
+  }
+  $("daysArea").innerHTML = html;
+  Array.prototype.forEach.call($("daysArea").querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(e){ if(e.detail) b.blur(); submit(parseInt(b.dataset.i, 10)); });
+  });
+}
+function buildNumButtons(){
+  $("numBtns").innerHTML = NUM_CHOICES.map(function(n){
+    return '<button type="button" data-n="' + n + '">' + n + "</button>";
+  }).join("");
+  Array.prototype.forEach.call($("numBtns").querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(e){ if(e.detail) b.blur(); submit(parseInt(b.dataset.n, 10)); });
+  });
+}
+
+/* ---------- série ---------- */
+function startSeries(queue){
+  clearTimeout(S.nextId);
+  S.pool = yearPool(cfg.yMin, cfg.yMax, cfg.leapOnly);
+  S.queue = queue || null;
+  S.total = queue ? queue.length : (cfg.len === 0 ? Infinity : cfg.len);
+  S.index = 0; S.answers = []; S.finished = false;
+  S.seriesStart = performance.now();
+  $("endScreen").classList.add("hidden");
+  $("quiz").classList.remove("hidden");
+  if(S.total === 0){ finishSeries(); return; }
+  loadQuestion();
+  startTimer();
+}
+
+function loadQuestion(){
+  S.locked = false; S.buffer = "";
+  if(S.queue){
+    var src = S.queue[S.index];
+    S.current = JSON.parse(JSON.stringify(src));
+  } else {
+    S.current = nextQuestion(cfg.mode, { pool: S.pool, leapOnly: cfg.leapOnly }, Math.random);
+  }
+  S.qStart = performance.now();
+
+  var q = S.current;
+  $("qkicker").textContent = q.type === "anchor" ? "Date repère du mois"
+    : q.type === "year" ? "Doomsday de l'année" : "Jour de la semaine";
+  $("qtext").textContent = q.label + " ?";
+  $("qhint").textContent = q.type === "anchor" ? "Quel est le quantième repère de ce mois ?"
+    : q.type === "year" ? "Quel jour tombent les dates repères cette année ?"
+    : (isLeap(q.year) ? "Année bissextile." : "");
+
+  var isNum = q.kind === "daynum";
+  $("numArea").classList.toggle("hidden", !isNum);
+  $("daysArea").classList.toggle("hidden", isNum);
+  Array.prototype.forEach.call($("daysArea").querySelectorAll("button"), function(b){
+    b.disabled = false; b.classList.remove("pick-ok", "pick-ko");
+  });
+  Array.prototype.forEach.call($("numBtns").querySelectorAll("button"), function(b){ b.disabled = false; });
+  var nd = $("numDisp");
+  nd.className = "numdisp empty"; nd.textContent = "–";
+
+  setNextButton(false);
+  $("feedback").className = "feedback";
+  $("feedback").innerHTML = "";
+  renderHead();
+  if(cfg.revision) renderRefTable();
+}
+
+function renderHead(){
+  var tot = S.total === Infinity ? "∞" : S.total;
+  $("counter").textContent = "Question " + Math.min(S.index + 1, S.total === Infinity ? S.index + 1 : S.total) + " / " + tot
+    + " · " + modeLabel(cfg.mode) + (S.queue ? " · révision des erreurs" : "");
+  $("progress").style.width = (S.total === Infinity ? 0 : (S.index / S.total) * 100) + "%";
+  renderChrono();
+}
+
+function renderChrono(){
+  if(!cfg.chrono){ $("chrono").innerHTML = '<span style="opacity:.6">Chrono masqué</span>'; return; }
+  var now = performance.now();
+  var q = S.locked ? S.qElapsed : (now - S.qStart);
+  var t = now - S.seriesStart;
+  $("chrono").innerHTML = "Question <b>" + (q/1000).toFixed(1) + "s</b> · Total <b>" + (t/1000).toFixed(1) + "s</b>";
+}
+function startTimer(){
+  clearInterval(S.timerId);
+  S.timerId = setInterval(function(){ if(!S.finished) renderChrono(); }, 100);
+}
+
+function submit(value, revealed){
+  if(S.locked || !S.current || S.finished) return;
+  var q = S.current;
+  S.qElapsed = performance.now() - S.qStart;
+  S.locked = true;
+  var ok = value !== null && value === q.answer;
+  S.answers.push({ q: q, given: value, ok: ok, revealed: !!revealed, ms: S.qElapsed });
+  recordMonth(q, ok);
+
+  if(q.kind === "weekday"){
+    var btns = $("daysArea").querySelectorAll("button");
+    Array.prototype.forEach.call(btns, function(b){ b.disabled = true; });
+    if(value !== null) btns[value].classList.add(ok ? "pick-ok" : "pick-ko");
+    if(!ok) btns[q.answer].classList.add("pick-ok");
+  } else {
+    var nd = $("numDisp");
+    nd.className = "numdisp " + (ok ? "pick-ok" : "pick-ko");
+    nd.textContent = ok ? String(value) : ((value === null ? "?" : value) + " → " + q.answer);
+    Array.prototype.forEach.call($("numBtns").querySelectorAll("button"), function(b){ b.disabled = true; });
+  }
+
+  var ex = explainQuestion(q);
+  var fb = $("feedback");
+  fb.className = "feedback show " + (ok ? "ok" : "ko");
+  var correctTxt = q.kind === "weekday" ? DAYS[q.answer] : String(q.answer);
+  var verdict = ok ? "Correct — " + correctTxt
+    : (revealed ? "Réponse révélée : " : "Faux — la réponse est ") + correctTxt;
+  var tip = isTouchUI()
+    ? (ok ? "Suite automatique · touche ici pour enchaîner tout de suite"
+          : "Prends le temps de lire · touche ici pour la suite")
+    : (ok ? "Suite automatique · <span class=\"kbd\">Entrée</span> pour enchaîner tout de suite"
+          : "Prends le temps de lire · <span class=\"kbd\">Entrée</span> ou « Passer » pour la suite");
+  fb.innerHTML = '<div class="verdict">' + verdict + "</div>" +
+    '<pre class="calc">' + calcHTML(ex.lines) + "</pre>" +
+    '<div class="tip">' + tip + "</div>";
+
+  // On n'enchaîne tout seul que si c'est juste : sur une erreur, on laisse lire.
+  setNextButton(true);
+  renderChrono();
+  if(ok) S.nextId = setTimeout(advance, DELAY_OK);
+}
+
+/* Le bouton principal est contextuel : « Voir la réponse » puis « Passer ». */
+function setNextButton(answered){
+  var b = $("revealBtn");
+  b.innerHTML = answered ? 'Passer <span class="kbd">Entrée</span>' : 'Voir la réponse <span class="kbd">Espace</span>';
+  b.classList.toggle("primary", answered);
+  b.title = answered ? "Passer à la question suivante"
+    : "Affiche la réponse et le calcul complet. La question est comptée comme non réussie.";
+}
+
+function advance(){
+  clearTimeout(S.nextId);
+  if(S.finished) return;
+  S.index++;
+  if(S.total !== Infinity && S.index >= S.total){ finishSeries(); return; }
+  loadQuestion();
+}
+
+function finishSeries(){
+  clearTimeout(S.nextId);
+  clearInterval(S.timerId);
+  S.finished = true;
+  var answered = S.answers;
+  var totalMs = answered.reduce(function(a, x){ return a + x.ms; }, 0);
+  var good = answered.filter(function(x){ return x.ok; }).length;
+  var n = answered.length;
+  var avg = n ? totalMs / n : 0;
+  var best = n ? Math.min.apply(null, answered.map(function(x){ return x.ms; })) : 0;
+
+  if(n > 0){
+    var hist = loadJSON(LS_HIST, []);
+    hist.push({ ts: Date.now(), mode: cfg.mode, score: good, total: n, avgMs: Math.round(avg), totalMs: Math.round(totalMs), replay: !!S.queue });
+    if(hist.length > 200) hist = hist.slice(hist.length - 200);
+    saveJSON(LS_HIST, hist);
+  }
+
+  $("quiz").classList.add("hidden");
+  $("endScreen").classList.remove("hidden");
+  $("endScores").innerHTML =
+    score("big", good + " / " + n, "Score") +
+    score("", n ? Math.round(good / n * 100) + " %" : "–", "Réussite") +
+    score("", fmtMs(totalMs), "Temps total") +
+    score("", fmtMs(avg), "Moyenne / question") +
+    score("", fmtMs(best), "Meilleur temps");
+
+  var errs = answered.filter(function(x){ return !x.ok; });
+  var slowest = n ? Math.max.apply(null, answered.map(function(x){ return x.ms; })) : 0;
+
+  $("recapHint").textContent = n ? "— clique une ligne pour revoir le calcul" : "";
+  $("endRecap").innerHTML = (errs.length === 0 && n > 0 ? '<div class="allgood" style="margin-bottom:10px">Aucune erreur. Sans faute !</div>' : "") +
+    (n === 0 ? '<div class="empty">Aucune question répondue.</div>' :
+    '<ul class="recap">' + answered.map(function(x, i){
+      var correct = x.q.kind === "weekday" ? DAYS[x.q.answer] : x.q.answer;
+      var given;
+      if(x.ok) given = "réponse <b>" + correct + "</b>";
+      else if(x.given === null) given = "<s>" + (x.revealed ? "réponse révélée" : "passée") + "</s> · correct <b>" + correct + "</b>";
+      else given = "<s>" + (x.q.kind === "weekday" ? DAYS[x.given] : x.given) + "</s> · correct <b>" + correct + "</b>";
+      var tcls = n > 1 && x.ms === best ? " fast" : (n > 1 && x.ms === slowest ? " slow" : "");
+      return '<li class="' + (x.ok ? "ok" : "ko") + '"><details><summary>' +
+        '<span class="q"><span class="num">' + (i + 1) + ".</span> " + x.q.short + "</span>" +
+        '<span class="a">' + given + ' · <span class="t' + tcls + '">' + fmtMs(x.ms) + "</span></span>" +
+        '</summary><pre class="calc">' + calcHTML(explainQuestion(x.q).lines) + "</pre></details></li>";
+    }).join("") + "</ul>");
+  $("replayErrBtn").disabled = errs.length === 0;
+  $("replayErrBtn").style.opacity = errs.length === 0 ? .5 : 1;
+  S.lastErrors = errs.map(function(x){ return x.q; });
+  renderStats();
+}
+function score(cls, v, l){ return '<div class="score ' + cls + '"><div class="v">' + v + '</div><div class="l">' + l + "</div></div>"; }
+
+/* ---------- statistiques ---------- */
+function recordMonth(q, ok){
+  if(!q.month) return;
+  var st = loadJSON(LS_MSTAT, {});
+  var k = String(q.month);
+  if(!st[k]) st[k] = { a: 0, e: 0 };
+  st[k].a++; if(!ok) st[k].e++;
+  saveJSON(LS_MSTAT, st);
+}
+
+function renderStats(){
+  var hist = loadJSON(LS_HIST, []);
+  var st = loadJSON(LS_MSTAT, {});
+
+  // historique textuel
+  $("histList").innerHTML = hist.length === 0 ? '<li><span class="empty">Aucune série enregistrée.</span></li>' :
+    hist.slice().reverse().slice(0, 40).map(function(h){
+      var d = new Date(h.ts);
+      var ds = d.toLocaleDateString("fr-FR", { day:"2-digit", month:"2-digit" }) + " " +
+               d.toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
+      return "<li><span>" + ds + " · " + modeLabel(h.mode) + "</span><span><b>" + h.score + "/" + h.total +
+        "</b> · <b>" + (h.avgMs/1000).toFixed(1) + "s</b></span></li>";
+    }).join("");
+
+  drawChart(hist);
+
+  // mois
+  var rows = [], maxRate = 0, i;
+  for(i = 1; i <= 12; i++){
+    var e = st[String(i)] || { a: 0, e: 0 };
+    var rate = e.a ? e.e / e.a : 0;
+    if(e.a) maxRate = Math.max(maxRate, rate);
+    rows.push({ m: i, a: e.a, e: e.e, rate: rate });
+  }
+  var any = rows.some(function(r){ return r.a > 0; });
+  $("monthBars").innerHTML = !any ? '<div class="empty">Pas encore de données. Joue quelques questions en mode « Dates repères » ou « Date complète ».</div>' :
+    rows.map(function(r){
+      var pct = r.a ? Math.round(r.rate * 100) : 0;
+      var w = r.a ? Math.max(3, r.rate * 100) : 0;
+      var worst = r.a >= 3 && r.rate === maxRate && maxRate > 0;
+      return '<div class="mb' + (worst ? " worst" : "") + '"><span class="name">' + MONTHS_CAP[r.m-1] + '</span>' +
+        '<span class="track"><i class="' + (r.e === 0 ? "zero" : "") + '" style="width:' + (r.a ? Math.max(w, r.e === 0 ? 100 : w) : 0) + '%"></i></span>' +
+        '<span class="val">' + (r.a ? pct + " % (" + r.e + "/" + r.a + ")" : "–") + "</span></div>";
+    }).join("");
+}
+
+function drawChart(hist){
+  var cv = $("chart");
+  var dpr = window.devicePixelRatio || 1;
+  var w = cv.clientWidth || 600, h = 190;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  var ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  var cs = getComputedStyle(document.documentElement);
+  var cBorder = cs.getPropertyValue("--border").trim() || "#2b3342";
+  var cMuted = cs.getPropertyValue("--muted").trim() || "#96a1b5";
+  var cAcc = cs.getPropertyValue("--accent").trim() || "#5b8cff";
+
+  var data = hist.slice(-30).map(function(x){ return x.avgMs / 1000; });
+  var pad = { l: 34, r: 8, t: 10, b: 20 };
+  var iw = w - pad.l - pad.r, ih = h - pad.t - pad.b;
+
+  ctx.font = "10px -apple-system,system-ui,sans-serif";
+  ctx.fillStyle = cMuted;
+
+  if(data.length === 0){
+    ctx.textAlign = "center";
+    ctx.fillText("Pas encore de série terminée.", w / 2, h / 2);
+    return;
+  }
+  var max = Math.max.apply(null, data) * 1.15 || 1;
+  var min = 0;
+
+  ctx.strokeStyle = cBorder; ctx.lineWidth = 1;
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for(var g = 0; g <= 4; g++){
+    var yv = min + (max - min) * g / 4;
+    var y = pad.t + ih - (ih * g / 4);
+    ctx.beginPath(); ctx.moveTo(pad.l, y + .5); ctx.lineTo(w - pad.r, y + .5); ctx.stroke();
+    ctx.fillStyle = cMuted; ctx.fillText(yv.toFixed(1), pad.l - 6, y);
+  }
+
+  var xat = function(i){ return data.length === 1 ? pad.l + iw / 2 : pad.l + (iw * i / (data.length - 1)); };
+  var yat = function(v){ return pad.t + ih - (ih * (v - min) / (max - min)); };
+
+  ctx.beginPath();
+  ctx.moveTo(xat(0), yat(data[0]));
+  for(var i = 1; i < data.length; i++) ctx.lineTo(xat(i), yat(data[i]));
+  ctx.strokeStyle = cAcc; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.lineTo(xat(data.length - 1), pad.t + ih);
+  ctx.lineTo(xat(0), pad.t + ih);
+  ctx.closePath();
+  ctx.globalAlpha = .12; ctx.fillStyle = cAcc; ctx.fill(); ctx.globalAlpha = 1;
+
+  ctx.fillStyle = cAcc;
+  for(var j = 0; j < data.length; j++){
+    ctx.beginPath(); ctx.arc(xat(j), yat(data[j]), 3, 0, Math.PI * 2); ctx.fill();
+  }
+
+  ctx.fillStyle = cMuted; ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText("série " + (hist.length - data.length + 1), pad.l, pad.t + ih + 5);
+  ctx.textAlign = "right";
+  ctx.fillText("série " + hist.length, w - pad.r, pad.t + ih + 5);
+}
+
+/* ---------- clavier ---------- */
+document.addEventListener("keydown", function(e){
+  if(e.metaKey || e.ctrlKey || e.altKey) return;
+  var tag = (e.target.tagName || "").toLowerCase();
+  if(tag === "input" || tag === "textarea" || tag === "select") return;
+
+  if(S.finished){
+    if(e.key === "Enter"){ e.preventDefault(); startSeries(null); }
+    else if(e.key.toLowerCase() === "e" && S.lastErrors && S.lastErrors.length){ e.preventDefault(); startSeries(S.lastErrors); }
+    return;
+  }
+
+  if(S.locked){
+    if(e.key === "Enter" || e.key === " " || e.key === "ArrowRight"){ e.preventDefault(); advance(); }
+    return;
+  }
+
+  var q = S.current;
+  if(!q) return;
+
+  if(e.key === " " || e.key === "ArrowRight"){ e.preventDefault(); reveal(); return; }
+
+  if(q.kind === "weekday"){
+    if(e.key >= "1" && e.key <= "7"){ e.preventDefault(); submit(parseInt(e.key, 10) - 1); }
+    return;
+  }
+
+  // saisie numérique
+  if(e.key >= "0" && e.key <= "9"){
+    e.preventDefault();
+    S.buffer = (S.buffer + e.key).slice(-2);
+    paintBuffer();
+    var n = parseInt(S.buffer, 10);
+    if(S.buffer.length === 2) submit(n);
+    else if(n >= 3 && n <= 9) submit(n);
+  } else if(e.key === "Backspace"){
+    e.preventDefault(); S.buffer = S.buffer.slice(0, -1); paintBuffer();
+  } else if(e.key === "Enter"){
+    e.preventDefault();
+    if(S.buffer !== "") submit(parseInt(S.buffer, 10));
+  }
+});
+function paintBuffer(){
+  var nd = $("numDisp");
+  nd.className = "numdisp" + (S.buffer === "" ? " empty" : "");
+  nd.textContent = S.buffer === "" ? "–" : S.buffer;
+}
+function reveal(){
+  if(S.locked || !S.current) return;
+  submit(null, true);
+}
+
+/* ---------- événements ---------- */
+function segHandler(el, key, cast){
+  el.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    if(e.detail) b.blur();
+    cfg[key] = cast(b.dataset.v);
+    saveCfg(); syncControls(); startSeries(null);
+  });
+}
+segHandler($("modeSeg"), "mode", String);
+segHandler($("lenSeg"), "len", Number);
+$("chronoSeg").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  if(e.detail) b.blur();
+  cfg.chrono = b.dataset.v === "1";
+  saveCfg(); syncControls(); renderChrono();
+});
+
+$("themeBtn").addEventListener("click", function(){
+  cfg.theme = cfg.theme === "dark" ? "light" : "dark";
+  saveCfg(); syncControls(); renderStats(); this.blur();
+});
+
+var Y_LOW = 1600, Y_HIGH = 2400;
+function clampYear(v, fb){
+  v = parseInt(v, 10);
+  if(!isFinite(v)) return fb;
+  return Math.min(Y_HIGH, Math.max(Y_LOW, v));
+}
+/* moving = "min" ou "max" : l'autre borne cède si elles se croisent. */
+function applyYears(a, b, moving){
+  a = clampYear(a, cfg.yMin); b = clampYear(b, cfg.yMax);
+  if(a > b){ if(moving === "min") b = a; else a = b; }
+  cfg.yMin = a; cfg.yMax = b;
+  $("yMin").value = a; $("yMax").value = b;
+  $("yMinNum").value = a; $("yMaxNum").value = b;
+}
+function commitYears(){
+  saveCfg();
+  if($("answersPanel").open) renderAnswersPanel();
+  startSeries(null);
+}
+$("yMin").addEventListener("input", function(){ applyYears(this.value, $("yMax").value, "min"); });
+$("yMax").addEventListener("input", function(){ applyYears($("yMin").value, this.value, "max"); });
+$("yMin").addEventListener("change", commitYears);
+$("yMax").addEventListener("change", commitYears);
+$("yMinNum").addEventListener("change", function(){ applyYears(this.value, cfg.yMax, "min"); commitYears(); });
+$("yMaxNum").addEventListener("change", function(){ applyYears(cfg.yMin, this.value, "max"); commitYears(); });
+$("yMinNum").addEventListener("keydown", function(e){ if(e.key === "Enter") this.blur(); });
+$("yMaxNum").addEventListener("keydown", function(e){ if(e.key === "Enter") this.blur(); });
+$("answersPanel").addEventListener("toggle", function(){ if(this.open) renderAnswersPanel(); });
+
+$("presets").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  b.blur();
+  cfg.yMin = parseInt(b.dataset.a, 10);
+  cfg.yMax = b.dataset.b === "now" ? new Date().getFullYear() : parseInt(b.dataset.b, 10);
+  saveCfg(); syncControls(); startSeries(null);
+});
+
+$("optLeap").addEventListener("change", function(){
+  cfg.leapOnly = this.checked; saveCfg();
+  if($("answersPanel").open) renderAnswersPanel();
+  startSeries(null);
+});
+$("optRevision").addEventListener("change", function(){
+  cfg.revision = this.checked; saveCfg(); syncControls();
+  if(cfg.revision) renderRefTable();
+  drawChart(loadJSON(LS_HIST, []));
+});
+
+/* Sur mobile le bouton « Passer » est sous les jours : le bloc de réponse
+   fait lui-même office de zone « suivant ». */
+$("feedback").addEventListener("click", function(){
+  if(S.locked && !S.finished) advance();
+});
+
+$("endNowBtn").addEventListener("click", function(){ this.blur(); finishSeries(); });
+$("revealBtn").addEventListener("click", function(){
+  this.blur();
+  if(S.locked) advance(); else reveal();
+});
+$("replayBtn").addEventListener("click", function(){ this.blur(); startSeries(null); });
+$("replayErrBtn").addEventListener("click", function(){
+  this.blur();
+  if(S.lastErrors && S.lastErrors.length) startSeries(S.lastErrors);
+});
+$("resetBtn").addEventListener("click", function(){
+  this.blur();
+  if(!confirm("Effacer tout l'historique des séries et les statistiques par mois ?")) return;
+  localStorage.removeItem(LS_HIST);
+  localStorage.removeItem(LS_MSTAT);
+  renderStats();
+});
+
+var resizeId;
+window.addEventListener("resize", function(){
+  clearTimeout(resizeId);
+  resizeId = setTimeout(function(){ drawChart(loadJSON(LS_HIST, [])); }, 120);
+});
+
+/* ---------- init ---------- */
+loadCfg();
+syncControls();
+buildDayButtons();
+buildNumButtons();
+renderRefTable();
+renderStats();
+startSeries(null);
+
+if(location.search.indexOf("selftest") !== -1){
+  var errs = selfTest(1600, 2400);
+  console.log(errs.length === 0 ? "SELFTEST OK (1600-2400)" : errs);
+  alert(errs.length === 0 ? "Auto-test OK : toutes les dates de 1600 à 2400 concordent avec Date." : "ÉCHEC : " + errs.slice(0, 5).join(", "));
+}
+</script>
+</body>
+</html>
