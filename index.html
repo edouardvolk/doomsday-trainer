@@ -716,7 +716,9 @@ function fmtMs(ms){
   var m = Math.floor(s / 60);
   return m + " min " + (s - m * 60).toFixed(0).padStart(2, "0") + " s";
 }
-function isTouchUI(){ return !!(window.matchMedia && matchMedia("(hover:none)").matches); }
+/* Même bascule que le bloc @media mobile : les raccourcis clavier y sont
+   masqués, le bloc de réponse sert de bouton « suivant ». */
+function isCompactUI(){ return !!(window.matchMedia && matchMedia("(hover:none), (max-width:760px)").matches); }
 function modeLabel(m){
   return { anchor:"Dates repères", year:"Doomsday de l'année", date:"Date complète", mixed:"Mixte" }[m] || m;
 }
@@ -913,7 +915,7 @@ function submit(value, revealed){
   var correctTxt = q.kind === "weekday" ? DAYS[q.answer] : String(q.answer);
   var verdict = ok ? "Correct — " + correctTxt
     : (revealed ? "Réponse révélée : " : "Faux — la réponse est ") + correctTxt;
-  var tip = isTouchUI()
+  var tip = isCompactUI()
     ? (ok ? "Suite automatique · touche ici pour enchaîner tout de suite"
           : "Prends le temps de lire · touche ici pour la suite")
     : (ok ? "Suite automatique · <span class=\"kbd\">Entrée</span> pour enchaîner tout de suite"
