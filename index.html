@@ -349,11 +349,12 @@ footer{color:var(--muted);font-size:.75rem;text-align:center;margin-top:18px}
             <div class="rangerow"><span>Min</span><input type="range" id="yMin" min="1600" max="2400" step="1"><input type="number" class="ynum" id="yMinNum" min="1600" max="2400" step="1" inputmode="numeric" aria-label="Année minimum"></div>
             <div class="rangerow"><span>Max</span><input type="range" id="yMax" min="1600" max="2400" step="1"><input type="number" class="ynum" id="yMaxNum" min="1600" max="2400" step="1" inputmode="numeric" aria-label="Année maximum"></div>
             <div class="presets" id="presets">
+              <button data-a="2000" data-b="2040">Défaut (2000-2040)</button>
               <button data-a="1900" data-b="1999">1900-1999</button>
               <button data-a="2000" data-b="2099">2000-2099</button>
               <button data-a="1990" data-b="now">Ma vie (1990-aujourd'hui)</button>
-              <button data-a="1600" data-b="2400">Large (1600-2400)</button>
-              <button data-a="1900" data-b="2100">Défaut (1900-2100)</button>
+              <button data-a="1900" data-b="2100">Large (1900-2100)</button>
+              <button data-a="1600" data-b="2400">Très large (1600-2400)</button>
             </div>
           </div>
         </div>
@@ -685,7 +686,7 @@ var DELAY_OK = 1200;
 
 var cfg = {
   mode: "mixed", len: 10, chrono: true, theme: "dark",
-  yMin: 1900, yMax: 2100, leapOnly: false, revision: false
+  yMin: 2000, yMax: 2040, leapOnly: false, revision: false
 };
 
 var S = {
